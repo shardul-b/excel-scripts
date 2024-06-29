@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 require('dotenv').config();
-
+const { asyncTryCatch } = require('../utils');
 const FileService = () => {
   const directory = process.env.BASE_DIRECTORY;
   console.log(process.env.BASE_DIRECTORY);
