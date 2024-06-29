@@ -5,37 +5,14 @@
  *
  */
 
-const fs = require('fs').promises;
 const XLSX = require('xlsx');
 const pdfParse = require('pdf-parse');
+const { asyncTryCatch } = require('./utils');
+const { FileService } = require('./services/file-service');
 
 // Base directory => should have statement pdfs
-const directory = 'BASE_DIRECTORY';
-/**
- * Try catch for promises
- * @param {Promise} promise
- * @returns {Promise<Array>} data,error
- */
-const asyncTryCatch = async (promise) => {
-  try {
-    const data = await promise;
-    return [data, null];
-  } catch (error) {
-    return [null, error];
-  }
-};
-/**
- * Checks if a file already exists
- * @param {*} file
- * @returns {Boolean}
- */
-const fileExists = async (file) => {
-  const [_, fileErr] = await asyncTryCatch(fs.access(file));
-  if (fileErr) {
-    return false;
-  }
-  return true;
-};
+const directory = process.env.BASE_DIRECTORY;
+
 /**
  * Extracts total due amount from pdf data string
  * @param {*} data
@@ -68,14 +45,7 @@ const getStatementPeriod = (data) => {
 
   return [start_date.trim(), end_date.trim()];
 };
-/**
- * Gets all files present in the base directory
- * @returns {Array} filenames (all files)
- */
-const getAllFiles = async () => {
-  let filenames = await fs.readdir(directory);
-  return filenames;
-};
+
 /**
  * Appends new data to existing Excel sheet
  * @param {String} fileName
@@ -111,7 +81,7 @@ const updateExcelFile = async (fileName, sheetName = null, newData) => {
 const writetoExcelSheet = async (newData) => {
   const excelFile = `credit-card.xlsx`;
 
-  const fileCheck = await fileExists(excelFile);
+  const fileCheck = await FileInstance.fileExists(excelFile);
   if (fileCheck) {
     //needs update
     const status = updateExcelFile(excelFile, 'credit-card', newData);
@@ -126,8 +96,10 @@ const writetoExcelSheet = async (newData) => {
 };
 
 const readCreditCardStatement = async () => {
+  let FileInstance = FileService();
+  let allFiles = await FileInstance.getAllFiles();
   // Get all credit card statements present in the base directory
-  let allFiles = await getAllFiles();
+  // let allFiles = await getAllFiles();
   const newData = [];
   let count = 0;
   // for each pdf statement
